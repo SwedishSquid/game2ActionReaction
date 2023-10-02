@@ -4,24 +4,35 @@ using UnityEngine;
 
 public class AGravitator : MonoBehaviour, IGravitator
 {
-    private GravityManager gManager;
     private Rigidbody2D rb;
-    [SerializeField] float GravityMass = 1;
-    [SerializeField] float OthersMult = 1;
-    [SerializeField] float MeMult = 1;
+    [SerializeField] float mass = 1;
+    [SerializeField] float othersMult = 1;
+    [SerializeField] float meMult = 1;
+
+    private static HashSet<int> testHashes = new HashSet<int>();
+
+    static AGravitator()
+    {
+        Debug.LogWarning("using hashchecker for AGravitator");
+    }
 
     void Awake()
     {
         rb = GetComponent<Rigidbody2D>();
+        if (testHashes.Contains(GetHashCode()))
+        {
+            throw new System.Exception("collision detected while testing hash for AGravitator");
+        }
+        else
+        {
+            testHashes.Add(GetHashCode());
+        }
     }
 
     // Start is called before the first frame update
     void Start()
     {
-        if (gManager == null)
-        {
-            throw new System.Exception("gManager not set on start");
-        }
+        rb.mass = mass;
     }
 
     // Update is called once per frame
@@ -32,14 +43,46 @@ public class AGravitator : MonoBehaviour, IGravitator
 
     public Vector2 Position => (Vector2)transform.position;
 
-    public float Mass => GravityMass;
+    public float Mass => mass;
 
-    public float AttractOthersMult => OthersMult;
+    public float AttractOthersMult => othersMult;
 
-    public float AttractMeMult => MeMult;
+    public float AttractMeMult => meMult;
 
     public void ProcessForce(Vector2 force)
     {
         rb.AddForce(force);
+    }
+
+    public void SetMass(float mass)
+    {
+        this.mass = mass;
+        rb.mass = mass;
+    }
+
+    private int? id = null;
+
+    public int Id { 
+        get 
+        {
+            if (id == null)
+            {
+                throw new System.NullReferenceException($"id for object {gameObject} not set, but requested");
+            }
+            return (int)id;
+        } 
+        private set 
+        {
+            id = value;
+        } 
+    }
+
+    public void SetId(int newId)
+    {
+        if (id != null)
+        {
+            Debug.LogWarning($"id for object {gameObject} set twice, which is strange");
+        }
+        id = newId;
     }
 }
